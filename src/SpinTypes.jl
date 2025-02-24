@@ -98,10 +98,8 @@ end
 mutable struct LlgParams
     "Heisenberg exchange"
     J::Real
-    "Easy z axis anisotropy"
-    K1::Real
-    "Easy y axis anisotropy"
-    K2::Real
+    "Easy axis anisotropy vector"
+    K::SVector{3, Real}
     "External magnetic field vector"
     B::SVector{3,Real}
     "Gilbert damping parameter"
@@ -110,8 +108,21 @@ mutable struct LlgParams
     ost::Bool
     "Non-Markovian kernel"
     kernels::Union{AbstractMatrix, Nothing}
-    "Sites subject to light"
+    "Sites subject to kernel"
     sites::Union{Integer, NTuple}
     "Jsd coupling"
     jsd::Real
+   
+   function LlgParams(J::Real, K::Vector, B::Vector, αG::Real)
+   	Kv = SVector{3}(K)
+   	Bv = SVector{3}(B)
+        return new(J, Kv, Bv, αG, false, nothing, 0, 0)
+    end
+    
+    function LlgParams(J::Real, K::Vector, B::Vector, αG::Real, ost::Bool, kernels::Union{AbstractMatrix, Nothing}, sites::Union{Integer, NTuple}, jsd::Real)
+   	Kv = SVector{3}(K)
+   	Bv = SVector{3}(B)
+        return new(J, Kv, Bv, αG, true, kernels, sites, jsd)
+    end
+   
 end

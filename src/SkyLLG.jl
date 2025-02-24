@@ -90,7 +90,7 @@ function effective_field(state::SpinState1D, p::LlgParams)
             exch += p.J * state[s+1]
         end
         
-        anis = 2*p.K1*state[s][3]*ẑ + 2*p.K2*state[s][2]*ŷ
+        anis = 2*p.K[1]*state[s][1]*x̂ + 2*p.K[2]*state[s][2]*ŷ + 2*p.K[3]*state[s][3]*ẑ
         field[s] = -exch - anis - p.B
     end
     
@@ -120,7 +120,8 @@ function effective_field(state::SpinState2D, p::LlgParams)
                 exch += p.J * state[r, c+1]
             end
 
-            anis = 2*p.K1*state[r,c][3]*ẑ + 2*p.K2*state[r,c][2]*ŷ
+            anis = 2*p.K[1]*state[r,c][3]*x̂ + 2*p.K[2]*state[r,c][2]*ŷ + 2*p.K[3]*state[r,c][3]*ẑ
+            
             # Store the result
             field[r, c] = -exch - anis - p.B
         end
