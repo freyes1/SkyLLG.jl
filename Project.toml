@@ -3,7 +3,19 @@ uuid = "00d88b7d-44fe-44d2-9db6-8ed2d3a0fc3c"
 authors = ["Felipe Reyes-Osorio"]
 version = "1.0.0-DEV"
 
+[deps]
+Cubature = "667455a9-e2ce-5579-9412-b964f529a492"
+ImageFiltering = "6a3955dd-da59-5b1f-98d4-e7296123deb5"
+Integrals = "de52edbc-65ea-441a-8357-d3a637375a31"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+
 [compat]
+Cubature = "1.5.1"
+ImageFiltering = "0.7.9"
+Integrals = "4.5.0"
+LinearAlgebra = "1.11.0"
+StaticArrays = "1.9.12"
 julia = "1.6.7"
 
 [extras]
