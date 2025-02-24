@@ -6,7 +6,7 @@ using Integrals, Cubature
 
 export SpinState1D, SpinState2D, SpinHistory, LlgParams
 export create_initial_state, evolve!, reformat
-export read_kernel, cut_kernel!, filter_kernel
+export cut_kernel!
 export KernelParams
 export compute_kernel, compute_kernel_b, compute_kernel_p
 export convert_to_triangular
