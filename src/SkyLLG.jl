@@ -144,15 +144,60 @@ end
 
 raw"Compute ``\int_{t_0}^t dt' η(t,t')\mathbf{S}(t')`` where t is now and 
 t_0 is now-depth. Uses trapezoid method."
-function kernel_field(hist::SpinHistory, ker, now, depth, dt, p::LlgParams)
-    conv = SpinState1D(fill((@SVector [0,0,0]), length(p.sites)))
+function light_kernel_field(hist::SpinHistory, ker, now, depth, dt, p::LlgParams)
+    conv = SpinState1D(fill((@SVector [0,0,0]), length(p.sites_l)))
     
-    for i in p.sites
+    for i in p.sites_l
         state_past = get_state_past(hist, i, now, depth)
         state_past .*= ker[depth,1:depth]
         conv[i] = p.jsd^2*trapezoid(state_past, dt)
     end
     return conv
+end
+
+function phonon_kernel_field(hist::SpinHistory, now, dt, p::LlgParams)
+    N = hist.states[1].N
+    field = SpinState1D(fill((@SVector [0,0,0]), N))
+
+    cut = floor(Integer, 4/p.ph_g/dt)
+    cutoff_idx =  min(cut, now)
+    
+    vec_dot_prods = Vector{Float64}(undef, cutoff_idx)
+
+    for n=1:N
+        coefs = [0.0,0.0]
+        for m=1:N
+            for (i,ns) in enumerate([-1,1])
+                ker = phonon_kernel_1D.((cutoff_idx-1)*dt:-dt:0, n-m, ns, 1)
+        	#println(ker)
+                if m<N
+                    sm1 = get_state_past(hist, m, now, cutoff_idx)
+                    sm2 = get_state_past(hist, m+1, now, cutoff_idx)
+                    vec_dot_prods .= sm1 .⋅ sm2
+                    vec_dot_prods .= vec_dot_prods .* ker
+                    coefs[i] += trapezoid(vec_dot_prods, dt)
+                end
+
+                if m>1
+                    sm1 = get_state_past(hist, m, now, cutoff_idx)
+                    sm2 = get_state_past(hist, m-1, now, cutoff_idx)
+                    vec_dot_prods .= sm1 .⋅ sm2
+                    vec_dot_prods .= vec_dot_prods .* ker
+                    coefs[i] -= trapezoid(vec_dot_prods, dt)
+                end
+
+            end
+        end   
+        
+        if n>1
+            field[n] += p.jp^2*coefs[1]*hist.states[end][n-1]
+        end
+        if n<N
+            field[n] += p.jp^2*coefs[2]*hist.states[end][n+1]
+        end
+    end
+    
+    return field
 end
 
 # =============== EVOLUTION FUNCTIONS =================
@@ -170,8 +215,12 @@ function compute_fields(hist::SpinHistory, curr::SpinState, p::LlgParams, now, d
     prev = hist[now - 2]
     push!(glob_fields, loc_damp(curr, prev, dto, p))
     
+    if p.phk
+    	push!(glob_fields, phonon_kernel_field(hist, now-1, dt, p))
+    end
+    
     if p.ost 
-        push!(loc_fields, kernel_field(hist, p.kernels, now-1, depth, dt, p)) 
+        push!(loc_fields, light_kernel_field(hist, p.kernels_l, now-1, depth, dt, p)) 
     end
     
     return glob_fields, loc_fields
@@ -188,7 +237,7 @@ function torques(state::T, p::LlgParams, glob_fields, loc_fields) where T <: Spi
     end
     
     for b in loc_fields
-        for i in p.sites
+        for i in p.sites_l
             tau[i] += state.spins[i] × b[i]
         end
     end

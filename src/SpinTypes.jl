@@ -104,25 +104,37 @@ mutable struct LlgParams
     B::SVector{3,Real}
     "Gilbert damping parameter"
     αG::Real
-    "Use Non-Markovian kernel?"
+    "Use Non-Markovian kernel of light?"
     ost::Bool
-    "Non-Markovian kernel"
-    kernels::Union{AbstractMatrix, Nothing}
-    "Sites subject to kernel"
-    sites::Union{Integer, NTuple}
+    "Non-Markovian kernel from light"
+    kernels_l::Union{AbstractMatrix, Nothing}
+    "Sites subject to kernel of light"
+    sites_l::Union{Integer, NTuple}
     "Jsd coupling"
     jsd::Real
+    "Use non-Markovian kernel of phonons?"
+    phk::Bool
+    "Phonon decay rate"
+    ph_g::Real
+    "Spin-lattice coupling"
+    jp::Real
    
    function LlgParams(J::Real, K::Vector, B::Vector, αG::Real)
    	Kv = SVector{3}(K)
    	Bv = SVector{3}(B)
-        return new(J, Kv, Bv, αG, false, nothing, 0, 0)
+        return new(J, Kv, Bv, αG, false, nothing, 0, 0, false, 0, 0)
     end
     
     function LlgParams(J::Real, K::Vector, B::Vector, αG::Real, ost::Bool, kernels::Union{AbstractMatrix, Nothing}, sites::Union{Integer, NTuple}, jsd::Real)
    	Kv = SVector{3}(K)
    	Bv = SVector{3}(B)
-        return new(J, Kv, Bv, αG, true, kernels, sites, jsd)
+        return new(J, Kv, Bv, αG, ost, kernels, sites, jsd, false,  0, 0)
+    end
+    
+    function LlgParams(J::Real, K::Vector, B::Vector, αG::Real, phk::Bool, ph_g::Real, jp::Real)
+   	Kv = SVector{3}(K)
+   	Bv = SVector{3}(B)
+        return new(J, Kv, Bv, αG, false, nothing, 0, 0, phk, ph_g, jp)
     end
    
 end

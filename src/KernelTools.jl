@@ -10,3 +10,10 @@ function cut_kernel!(ker, center, std_dev; nsigma=2.5)
         end
     end 
 end
+
+function phonon_kernel_1D(t, x, ns, ms, a=1, g=0.2)
+    ker = (t-x>0) + (t+x>0)
+    ker -= (t-x-ns*a>0) + (t+x+ns*a>0)
+    
+    return ns*ms*ker*(t>0)*(t<4/g)*exp(-g*t)
+end
