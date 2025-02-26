@@ -155,6 +155,11 @@ function light_kernel_field(hist::SpinHistory, ker, now, depth, dt, p::LlgParams
     return conv
 end
 
+raw"""
+    phonon_kernel_field(hist, now, dt, p)
+
+Computes effective magnetic field originating from spin-lattice interaction on all sites of a 1D chain. Magnitude of effective field is proportional integration over past history of all the ``S_m \cdot S_{m'}`` weighted by the phonon kernel.
+"""
 function phonon_kernel_field(hist::SpinHistory, now, dt, p::LlgParams)
     N = hist.states[1].N
     field = SpinState1D(fill((@SVector [0,0,0]), N))
@@ -169,7 +174,7 @@ function phonon_kernel_field(hist::SpinHistory, now, dt, p::LlgParams)
         for m=1:N
             for (i,ns) in enumerate([-1,1])
                 ker = phonon_kernel_1D.((cutoff_idx-1)*dt:-dt:0, n-m, ns, 1)
-        	#println(ker)
+
                 if m<N
                     sm1 = get_state_past(hist, m, now, cutoff_idx)
                     sm2 = get_state_past(hist, m+1, now, cutoff_idx)
