@@ -11,7 +11,7 @@ function cut_kernel!(ker, center, std_dev; nsigma=2.5)
     end 
 end
 
-"""
+raw"""
      phonon_kernel_1D(t, x, ns, ms, a=1, g=0.2)
      
 Computes nonlocal non-Markovian kernel due to phonons at t-t' and x=n-m. Only adjacent sites contribute, i.e.,
