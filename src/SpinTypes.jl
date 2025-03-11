@@ -104,6 +104,10 @@ mutable struct LlgParams
     B::SVector{3,Real}
     "Gilbert damping parameter"
     αG::Real
+    "Include thermal fluctuations"
+    thermal::Bool
+    "Temperature"
+    T::Real
     "Use Non-Markovian kernel of light?"
     ost::Bool
     "Non-Markovian kernel from light"
@@ -122,19 +126,25 @@ mutable struct LlgParams
    function LlgParams(J::Real, K::Vector, B::Vector, αG::Real)
    	Kv = SVector{3}(K)
    	Bv = SVector{3}(B)
-        return new(J, Kv, Bv, αG, false, nothing, 0, 0, false, 0, 0)
+        return new(J, Kv, Bv, αG, false, 0, false, nothing, 0, 0, false, 0, 0)
+    end
+    
+    function LlgParams(J::Real, K::Vector, B::Vector, αG::Real, thermal::Bool, T::Real)
+   	Kv = SVector{3}(K)
+   	Bv = SVector{3}(B)
+        return new(J, Kv, Bv, αG, thermal, T, false, nothing, 0, 0, false, 0, 0)
     end
     
     function LlgParams(J::Real, K::Vector, B::Vector, αG::Real, ost::Bool, kernels::Union{AbstractMatrix, Nothing}, sites::Union{Integer, NTuple}, jsd::Real)
    	Kv = SVector{3}(K)
    	Bv = SVector{3}(B)
-        return new(J, Kv, Bv, αG, ost, kernels, sites, jsd, false,  0, 0)
+        return new(J, Kv, Bv, αG, false, 0, ost, kernels, sites, jsd, false,  0, 0)
     end
     
     function LlgParams(J::Real, K::Vector, B::Vector, αG::Real, phk::Bool, ph_g::Real, jp::Real)
    	Kv = SVector{3}(K)
    	Bv = SVector{3}(B)
-        return new(J, Kv, Bv, αG, false, nothing, 0, 0, phk, ph_g, jp)
+        return new(J, Kv, Bv, αG, false, 0,  false, nothing, 0, 0, phk, ph_g, jp)
     end
    
 end

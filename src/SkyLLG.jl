@@ -3,6 +3,7 @@ module SkyLLG
 using LinearAlgebra
 using StaticArrays
 using Integrals, Cubature
+using Distributions:Normal
 
 export SpinState1D, SpinState2D, SpinHistory, LlgParams
 export create_initial_state, evolve!, reformat
@@ -125,6 +126,16 @@ function effective_field(state::SpinState2D, p::LlgParams)
             # Store the result
             field[r, c] = -exch - anis - p.B
         end
+    end
+    
+    return field
+end
+
+function thermal_field(state::SpinState, p::LlgParams)
+    field = typeof(state)(similar(state.spins))
+
+    for i=1:length(field.spins)
+        field[i] = @SVector rand(Normal(0,2*p.T*p.αG), 3)
     end
     
     return field
@@ -298,7 +309,12 @@ function evolve!(history::SpinHistory, new_times, p::LlgParams)
     for t = 1:lastindex(new_times)
         current = history[t1 + t - 1]
         
-        fields = compute_fields(history, current, p, t+t1, tstep, tstepold, t)       
+        fields = compute_fields(history, current, p, t+t1, tstep, tstepold, t)
+        if p.thermal
+        	th_field = thermal_field(current, p)
+    		push!(fields[1], th_field)
+    	end
+    	
         torques1 = torques(current, p, fields...)
         
         prediction = predict(current, torques1, tstep)
@@ -306,6 +322,9 @@ function evolve!(history::SpinHistory, new_times, p::LlgParams)
         push!(history.states, prediction)
         
         fields = compute_fields(history, prediction, p, t+t1+1, tstep, tstepold, t+1)
+        if p.thermal
+    		push!(fields[1], th_field)
+    	end
         torques2 = torques(prediction, p, fields...)
         
         history[t1+t] = correct(current, torques1, torques2, tstep)
