@@ -15,6 +15,7 @@ export convert_to_triangular
 include("SpinTypes.jl")
 include("KernelTools.jl")
 include("IntegrateKernel.jl")
+include("InitialStates.jl")
 
 const x̂ = SVector(1,0,0)
 const ŷ = SVector(0,1,0)
