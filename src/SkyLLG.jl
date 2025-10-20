@@ -132,6 +132,18 @@ function effective_field(state::SpinState2D, p::LlgParams)
     return field
 end
 
+function staggered_field(state::SpinState, p::LlgParams)
+	field = typeof(state)(similar(state.spins))
+
+	for i=1:length(field.spins)
+        field[i] = @SVector [0,0, p.stag*(1 - 2*(i%2))]
+    end
+    
+    return field
+	
+end
+
+
 function thermal_field(state::SpinState, p::LlgParams)
     field = typeof(state)(similar(state.spins))
 
@@ -232,6 +244,8 @@ function compute_fields(hist::SpinHistory, curr::SpinState, p::LlgParams, now, d
     prev = hist[now - 2]
     push!(glob_fields, loc_damp(curr, prev, dto, p))
     
+    push!(glob_fields, staggered_field(curr, p))
+    
     if p.phk
     	push!(glob_fields, phonon_kernel_field(hist, now-1, dt, p))
     end
@@ -311,6 +325,9 @@ function evolve!(history::SpinHistory, new_times, p::LlgParams)
         current = history[t1 + t - 1]
         
         fields = compute_fields(history, current, p, t+t1, tstep, tstepold, t)
+        
+        # The thermal field must be included outside of the other fields because otherwise
+        # it will be randomly recalculated in the correction step
         if p.thermal
         	th_field = thermal_field(current, p)
     		push!(fields[1], th_field)

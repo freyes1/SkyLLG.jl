@@ -122,12 +122,14 @@ mutable struct LlgParams
     ph_g::Real
     "Spin-lattice coupling"
     jp::Real
+    "Staggered field"
+    stag::Real
    
     
     function LlgParams(J::Real, K::Vector, B::Vector, αG::Real, thermal::Bool, T::Real)
    	Kv = SVector{3}(K)
    	Bv = SVector{3}(B)
-        return new(J, Kv, Bv, αG, thermal, T, false, nothing, 0, 0, false, 0, 0)
+        return new(J, Kv, Bv, αG, thermal, T, false, nothing, 0, 0, false, 0, 0, 0)
     end
    
 end
