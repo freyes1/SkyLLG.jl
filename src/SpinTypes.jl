@@ -124,12 +124,14 @@ mutable struct LlgParams
     jp::Real
     "Staggered field"
     stag::Real
+    "Next-NN damping tensor in the x and y direction, respectively"
+    Λtens::NTuple{2, <:Matrix}
    
     
     function LlgParams(J::Real, K::Vector, B::Vector, αG::Real, thermal::Bool, T::Real)
    	Kv = SVector{3}(K)
    	Bv = SVector{3}(B)
-        return new(J, Kv, Bv, αG, thermal, T, false, nothing, 0, 0, false, 0, 0, 0)
+        return new(J, Kv, Bv, αG, thermal, T, false, nothing, 0, 0, false, 0, 0, 0, (collect(I(3)), collect(I(3))))
     end
    
 end
