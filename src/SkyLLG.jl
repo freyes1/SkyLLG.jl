@@ -235,6 +235,47 @@ function next_nn_damp(curr::SpinState2D, prev::SpinState2D, dt, p::LlgParams)
     return field
 end
 
+raw"Compute next nearest neighbor damping for 2D systems"
+function am_nnn_damp(curr::SpinState2D, prev::SpinState2D, dt, p::LlgParams)
+    ds = copy(curr)
+
+    for (i,ps) in enumerate(prev.spins)
+        ds[i] -= ps
+        ds[i] *= 1/dt
+    end
+
+    field = SpinState2D(similar(curr.spins))
+
+    nrows, ncols = curr.N
+
+    for c = 1:ncols
+        for r = 1:nrows
+            damp = @SVector zeros(3)
+
+            # Check for neighbors and accumulate the exchange contribution
+            if (c+r)%2==1 
+                if r > 2          # Has a neighbor above
+                    damp += p.Λtens[2] * ds[r-2, c]
+                end
+                if r < nrows-1      # Has a neighbor below
+                    damp += p.Λtens[2] * ds[r+2, c]
+                end
+            
+            else
+                if c > 2          # Has a neighbor on the left
+                    damp += p.Λtens[1] * ds[r, c-2]
+                end
+                if c < ncols-1      # Has a neighbor on the right
+                    damp += p.Λtens[1] * ds[r, c+2]
+                end
+            end
+
+            # Store the result
+            field[r, c] = damp
+        end
+    end
+    return field
+end
 
 
 raw"Compute ``\int_{t_0}^t dt' η(t,t')\mathbf{S}(t')`` where t is now and 
@@ -314,8 +355,9 @@ function compute_fields(hist::SpinHistory, curr::SpinState, p::LlgParams, now, d
     
     prev = hist[now - 2]
     push!(glob_fields, loc_damp(curr, prev, dto, p))
-    push!(glob_fields, next_nn_damp(curr, prev, dto, p))
-    
+    #push!(glob_fields, next_nn_damp(curr, prev, dto, p))
+    push!(glob_fields, am_nnn_damp(curr, prev, dto, p))
+
     push!(glob_fields, staggered_field(curr, p))
     
     if p.phk
