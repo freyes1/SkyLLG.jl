@@ -103,7 +103,7 @@ mutable struct LlgParams
     "External magnetic field vector"
     B::SVector{3,Real}
     "Gilbert damping parameter"
-    αG::Real
+    αG::Union{Real, <:Matrix}
     "Include thermal fluctuations"
     thermal::Bool
     "Temperature"
@@ -125,13 +125,13 @@ mutable struct LlgParams
     "Staggered field"
     stag::Real
     "Next-NN damping tensor in the x and y direction, respectively"
-    Λtens::NTuple{2, <:Matrix}
+    Λtens::NTuple{2, <:Union{Real, <:Matrix}}
    
     
-    function LlgParams(J::Real, K::Vector, B::Vector, αG::Real, thermal::Bool, T::Real)
+    function LlgParams(J::Real, K::Vector, B::Vector, αG::Union{Real, <:Matrix}, thermal::Bool, T::Real)
    	Kv = SVector{3}(K)
    	Bv = SVector{3}(B)
-        return new(J, Kv, Bv, αG, thermal, T, false, nothing, 0, 0, false, 0, 0, 0, (collect(I(3)), collect(I(3))))
+        return new(J, Kv, Bv, αG, thermal, T, false, nothing, 0, 0, false, 0, 0, 0, (0, 0))
     end
    
 end
