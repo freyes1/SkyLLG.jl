@@ -150,7 +150,8 @@ function thermal_field(state::SpinState, p::LlgParams)
     field = typeof(state)(similar(state.spins))
 
     for i=1:length(field.spins)
-        field[i] = @SVector rand(Normal(0,2*p.T*p.αG), 3)
+        rand_field = rand.(Normal.(0, 2*p.T*diag(p.αG .* I(3))))
+        field[i] = SVector(rand_field...)
     end
     
     return field
@@ -355,8 +356,8 @@ function compute_fields(hist::SpinHistory, curr::SpinState, p::LlgParams, now, d
     
     prev = hist[now - 2]
     push!(glob_fields, loc_damp(curr, prev, dto, p))
-    #push!(glob_fields, next_nn_damp(curr, prev, dto, p))
-    push!(glob_fields, am_nnn_damp(curr, prev, dto, p))
+    push!(glob_fields, next_nn_damp(curr, prev, dto, p))
+    #push!(glob_fields, am_nnn_damp(curr, prev, dto, p))
 
     push!(glob_fields, staggered_field(curr, p))
     
