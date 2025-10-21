@@ -133,10 +133,12 @@ function effective_field(state::SpinState2D, p::LlgParams)
 end
 
 function staggered_field(state::SpinState, p::LlgParams)
-	field = typeof(state)(similar(state.spins))
+    field = typeof(state)(similar(state.spins))
+    inds = CartesianIndices(state.N)
 
-	for i=1:length(field.spins)
-        field[i] = @SVector [0,0, p.stag*(1 - 2*(i%2))]
+    for (n,i) in enumerate(inds)
+        sign = (-1)^(sum(Tuple(i)))
+        field[n] = @SVector [0,0, p.stag*sign]
     end
     
     return field
