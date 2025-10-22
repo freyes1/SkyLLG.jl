@@ -134,7 +134,7 @@ end
 
 function staggered_field(state::SpinState, p::LlgParams)
     field = typeof(state)(similar(state.spins))
-    inds = CartesianIndices(state.N)
+    inds = CartesianIndices(size(state.spins))
 
     for (n,i) in enumerate(inds)
         sign = (-1)^(sum(Tuple(i)))
