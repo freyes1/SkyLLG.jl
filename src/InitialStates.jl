@@ -1,6 +1,8 @@
 using NonlinearSolve:NonlinearProblem, solve
 using Distributions:Exponential, truncated
 
+export thermal_state_z, simulated_annealing
+
 """
     thermal_state_z(N, z, kbT, p::LlgParams)
 
