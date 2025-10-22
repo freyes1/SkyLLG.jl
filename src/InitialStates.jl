@@ -1,5 +1,3 @@
-module InitialStates
-
 using NonlinearSolve:NonlinearProblem, solve
 using Distributions:Exponential, truncated
 
@@ -73,7 +71,4 @@ function simulated_annealing(T_init, T_final, hist::SpinHistory,
     println("Final temperature is $(p.T)")
 
     return hist.states[end]
-end
-
-
 end
