@@ -132,11 +132,26 @@ function effective_field(state::SpinState2D, p::LlgParams)
     return field
 end
 
+function staggered_field(state::SpinState, p::LlgParams)
+    field = typeof(state)(similar(state.spins))
+    inds = CartesianIndices(size(state.spins))
+
+    for (n,i) in enumerate(inds)
+        sign = (-1)^(sum(Tuple(i)))
+        field[n] = @SVector [0,0, p.stag*sign]
+    end
+    
+    return field
+	
+end
+
+"Compute stochastic thermal field"
 function thermal_field(state::SpinState, p::LlgParams)
     field = typeof(state)(similar(state.spins))
 
     for i=1:length(field.spins)
-        field[i] = @SVector rand(Normal(0,2*p.T*p.αG), 3)
+        rand_field = rand.(Normal.(0, 2*p.T*diag(p.αG .* I(3))))
+        field[i] = SVector(rand_field...)
     end
     
     return field
@@ -153,6 +168,116 @@ function loc_damp(curr::SpinState, prev::SpinState, dt, p::LlgParams)
     
     return ds
 end
+
+raw"Compute next nearest neighbor damping for 1D systems"
+function next_nn_damp(curr::SpinState1D, prev::SpinState1D, dt, p::LlgParams)
+    ds = copy(curr)
+    
+    for (i,ps) in enumerate(prev.spins)
+        ds[i] -= ps
+        ds[i] *= 1/dt
+    end
+    
+    field = SpinState1D(similar(curr.spins))
+    
+    nsites = curr.N
+    
+    for s = 1:nsites
+        damp = @SVector zeros(3)
+        
+        if s > 2             # Has a neighbor on the left
+            damp += p.Λtens[1] * ds[s-2]
+        end
+        if s < nsites-1        # Has a neighbor on the right
+            damp += p.Λtens[1] * ds[s+2]
+        end
+        
+        field[s] = damp 
+    end
+    
+    return field
+end
+
+raw"Compute next nearest neighbor damping for 2D systems"
+function next_nn_damp(curr::SpinState2D, prev::SpinState2D, dt, p::LlgParams)
+    ds = copy(curr)
+    
+    for (i,ps) in enumerate(prev.spins)
+        ds[i] -= ps
+        ds[i] *= 1/dt
+    end
+    
+    field = SpinState2D(similar(curr.spins))
+    
+    nrows, ncols = curr.N
+    
+    for c = 1:ncols
+        for r = 1:nrows
+            damp = @SVector zeros(3)
+
+            # Check for neighbors and accumulate the exchange contribution
+            if r > 2          # Has a neighbor above
+                damp += p.Λtens[1] * ds[r-2, c]
+            end
+            if r < nrows-1      # Has a neighbor below
+                damp += p.Λtens[1] * ds[r+2, c]
+            end
+            if c > 2          # Has a neighbor on the left
+                damp += p.Λtens[2] * ds[r, c-2]
+            end
+            if c < ncols-1      # Has a neighbor on the right
+                damp += p.Λtens[2] * ds[r, c+2]
+            end
+  
+            # Store the result
+            field[r, c] = damp
+        end
+    end
+    return field
+end
+
+raw"Compute next nearest neighbor damping for 2D systems"
+function am_nnn_damp(curr::SpinState2D, prev::SpinState2D, dt, p::LlgParams)
+    ds = copy(curr)
+
+    for (i,ps) in enumerate(prev.spins)
+        ds[i] -= ps
+        ds[i] *= 1/dt
+    end
+
+    field = SpinState2D(similar(curr.spins))
+
+    nrows, ncols = curr.N
+
+    for c = 1:ncols
+        for r = 1:nrows
+            damp = @SVector zeros(3)
+
+            # Check for neighbors and accumulate the exchange contribution
+            if (c+r)%2==1 
+                if r > 2          # Has a neighbor above
+                    damp += p.Λtens[2] * ds[r-2, c]
+                end
+                if r < nrows-1      # Has a neighbor below
+                    damp += p.Λtens[2] * ds[r+2, c]
+                end
+            
+            else
+                if c > 2          # Has a neighbor on the left
+                    damp += p.Λtens[1] * ds[r, c-2]
+                end
+                if c < ncols-1      # Has a neighbor on the right
+                    damp += p.Λtens[1] * ds[r, c+2]
+                end
+            end
+
+            # Store the result
+            field[r, c] = damp
+        end
+    end
+    return field
+end
+
 
 raw"Compute ``\int_{t_0}^t dt' η(t,t')\mathbf{S}(t')`` where t is now and 
 t_0 is now-depth. Uses trapezoid method."
@@ -231,6 +356,10 @@ function compute_fields(hist::SpinHistory, curr::SpinState, p::LlgParams, now, d
     
     prev = hist[now - 2]
     push!(glob_fields, loc_damp(curr, prev, dto, p))
+    push!(glob_fields, next_nn_damp(curr, prev, dto, p))
+    #push!(glob_fields, am_nnn_damp(curr, prev, dto, p))
+
+    push!(glob_fields, staggered_field(curr, p))
     
     if p.phk
     	push!(glob_fields, phonon_kernel_field(hist, now-1, dt, p))
@@ -311,6 +440,9 @@ function evolve!(history::SpinHistory, new_times, p::LlgParams)
         current = history[t1 + t - 1]
         
         fields = compute_fields(history, current, p, t+t1, tstep, tstepold, t)
+        
+        # The thermal field must be included outside of the other fields because otherwise
+        # it will be randomly recalculated in the correction step
         if p.thermal
         	th_field = thermal_field(current, p)
     		push!(fields[1], th_field)

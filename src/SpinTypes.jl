@@ -103,7 +103,7 @@ mutable struct LlgParams
     "External magnetic field vector"
     B::SVector{3,Real}
     "Gilbert damping parameter"
-    αG::Real
+    αG::Union{Real, <:Matrix}
     "Include thermal fluctuations"
     thermal::Bool
     "Temperature"
@@ -122,29 +122,16 @@ mutable struct LlgParams
     ph_g::Real
     "Spin-lattice coupling"
     jp::Real
+    "Staggered field"
+    stag::Real
+    "Next-NN damping tensor in the x and y direction, respectively"
+    Λtens::NTuple{2, <:Union{Real, <:Matrix}}
    
-   function LlgParams(J::Real, K::Vector, B::Vector, αG::Real)
-   	Kv = SVector{3}(K)
-   	Bv = SVector{3}(B)
-        return new(J, Kv, Bv, αG, false, 0, false, nothing, 0, 0, false, 0, 0)
-    end
     
-    function LlgParams(J::Real, K::Vector, B::Vector, αG::Real, thermal::Bool, T::Real)
+    function LlgParams(J::Real, K::Vector, B::Vector, αG::Union{Real, <:Matrix}, thermal::Bool, T::Real)
    	Kv = SVector{3}(K)
    	Bv = SVector{3}(B)
-        return new(J, Kv, Bv, αG, thermal, T, false, nothing, 0, 0, false, 0, 0)
-    end
-    
-    function LlgParams(J::Real, K::Vector, B::Vector, αG::Real, ost::Bool, kernels::Union{AbstractMatrix, Nothing}, sites::Union{Integer, NTuple}, jsd::Real)
-   	Kv = SVector{3}(K)
-   	Bv = SVector{3}(B)
-        return new(J, Kv, Bv, αG, false, 0, ost, kernels, sites, jsd, false,  0, 0)
-    end
-    
-    function LlgParams(J::Real, K::Vector, B::Vector, αG::Real, phk::Bool, ph_g::Real, jp::Real)
-   	Kv = SVector{3}(K)
-   	Bv = SVector{3}(B)
-        return new(J, Kv, Bv, αG, false, 0,  false, nothing, 0, 0, phk, ph_g, jp)
+        return new(J, Kv, Bv, αG, thermal, T, false, nothing, 0, 0, false, 0, 0, 0, (0, 0))
     end
    
 end
